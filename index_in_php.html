@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!--google auth meta-->
+    <meta name="google-signin-client_id"
+        content="177105963371-j69j3regcq7rma23gt0g9c2mp4a16k6d.apps.googleusercontent.com">
+    <!--google auth script-->
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <!--facebook auth script-->
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+
+    <title>Auths</title>
+    <style>
+        .center {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            top: 40%;
+            left: 50%;
+            background-color: rgb(224, 233, 233);
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="center">
+        <!-- google auth start -->
+        <div class="g-signin2" data-width="" data-onsuccess="onSignInGoogle"></div>
+        <br />
+        <button onclick="signOutGoogle();">Sign out: Google</button>
+        <!-- google auth ends -->
+        <br />
+        <br />
+        <!-- facebook auth start -->
+        <div class="fb-login-button" scope="public_profile,email" onlogin="checkLoginState();" data-width="100"
+            data-size="large" data-button-type="continue_with" data-layout="default" data-auto-logout-link="false"
+            data-use-continue-as="false"></div>
+        <br />
+        <br />
+        <button onclick="signOutFacebook();">Sign out: Facebook</button>
+        <!-- facebook auth ends -->
+        <br />
+        <br />
+        <!--twitter auth start-->
+        <form method="post">
+            <input class="button" type="submit"  name="onSignInTwitter" value="onSignInTwitter">
+                <img src="https://cdn.cms-twdigitalassets.com/content/dam/developer-twitter/auth-docs/sign-in-with-twitter-gray.png.twimg.1920.png"
+                    style="width: 158px" width="158px" height="28px"
+                    data-src="https://cdn.cms-twdigitalassets.com/content/dam/developer-twitter/auth-docs/sign-in-with-twitter-gray.png.twimg.1920.png"
+                    data-object-fit="cover" />
+            </input>
+        </form>
+    </div>
+    <!--twitter auth end-->
+    </div>
+    <div id="status-google">
+    </div>
+    <div id="status-facebook">
+    </div>
+    <div id="status-twitter">
+    </div>
+
+<?php
+//google
+$onSignInGoogle = new Func("onSignInGoogle", function($googleUser = null) use (&$console, &$document) {
+  $profile = call_method($googleUser, "getBasicProfile");
+  call_method($console, "log", _concat("ID: ", call_method($profile, "getId")));
+  call_method($console, "log", _concat("Name: ", call_method($profile, "getName")));
+  call_method($console, "log", _concat("Image URL: ", call_method($profile, "getImageUrl")));
+  call_method($console, "log", _concat("Email: ", call_method($profile, "getEmail")));
+  set(call_method($document, "getElementById", "status-google"), "innerHTML", _concat("Thanks for logging in, ", call_method($profile, "getName"), "!", " Profile ID: ", call_method($profile, "getId")));
+});
+$signOutGoogle = new Func("signOutGoogle", function() use (&$gapi, &$console, &$document) {
+  $auth2 = call_method(get($gapi, "auth2"), "getAuthInstance");
+  call_method(call_method($auth2, "signOut"), "then", new Func(function() use (&$console, &$document) {
+    call_method($console, "log", "User signed out.");
+    set(call_method($document, "getElementById", "status-google"), "innerHTML", "Logged out");
+  }));
+});
+
+
+
+
+//facebook
+$statusChangeCallback = new Func("statusChangeCallback", function($response = null) use (&$console, &$testAPI, &$document) {
+  call_method($console, "log", $response);
+  if (get($response, "status") === "connected") {
+    call($testAPI, get(get($response, "authResponse"), "accessToken"));
+  } else {
+    set(call_method($document, "getElementById", "status-facebook"), "innerHTML", _concat("Please log ", "into this webpage."));
+  }
+
+});
+$testAPI = new Func("testAPI", function($accessToken = null) use (&$FB, &$console, &$document) {
+  call_method($FB, "api", "/me", new Func(function($response = null) use (&$console, &$document, &$accessToken) {
+    call_method($console, "log", _concat("Successful login for: ", get($response, "name")));
+    set(call_method($document, "getElementById", "status-facebook"), "innerHTML", _concat("Thanks for logging in, ", get($response, "name"), "!", " AccessToken: ", $accessToken));
+  }));
+});
+$checkLoginState = new Func("checkLoginState", function() use (&$FB, &$statusChangeCallback) {
+  call_method($FB, "getLoginStatus", new Func(function($response = null) use (&$statusChangeCallback) {
+    call($statusChangeCallback, $response);
+  }));
+});
+$signOutFacebook = new Func("signOutFacebook", function() use (&$FB, &$console, &$document) {
+  call_method($FB, "logout", new Func(function($response = null) use (&$console, &$document) {
+    call_method($console, "log", "user is now logged out");
+    set(call_method($document, "getElementById", "status-facebook"), "innerHTML", "Logged out");
+  }));
+});
+set($window, "fbAsyncInit", new Func(function() use (&$FB) {
+  call_method($FB, "init", new Object("appId", "696468478161371", "cookie", true, "xfbml", true, "version", "v13.0"));
+  call_method(get($FB, "AppEvents"), "logPageView");
+}));
+
+
+
+
+//twitter
+function onSignInTwitter() {
+  $base_url = " https://twitter.com/i/oauth2/authorize?";
+  $demo_client_id = "M1M5R3BMVy13QmpScXkzTUt5OE46MTpjaQ";
+  $redirect_uri = "https://www.example.com";
+  $request_url = _concat($base_url, "response_type=code&client_id=", $demo_client_id, "&redirect_uri=", $redirect_uri);
+  $curl = curl_init();
+curl_setopt_array($curl, array(
+    CURLOPT_RETURNTRANSFER => 1,
+    CURLOPT_URL => $request_url,
+    CURLOPT_USERAGENT => 'cURL Request'
+));
+$resp = curl_exec($curl);
+curl_close($curl);
+
+};
+
+?>
+</body>
+</html>
