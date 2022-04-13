@@ -1,0 +1,152 @@
+<!doctype html>
+<html dir="ltr" lang="en">
+
+<head>
+    <!--google auth meta-->
+    <meta name="google-signin-client_id"
+        content="177105963371-j69j3regcq7rma23gt0g9c2mp4a16k6d.apps.googleusercontent.com">
+    <!--google auth script-->
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <!--facebook auth script-->
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+
+
+    <title>Auths</title>
+    <style>
+        .center {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            top: 40%;
+            left: 50%;
+            background-color: rgb(224, 233, 233);
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="center">
+        <!-- google auth start -->
+        <div class="g-signin2" data-width="" data-onsuccess="onSignInGoogle"></div>
+        <br />
+        <button onclick="signOutGoogle();">Sign out: Google</button>
+        <!-- google auth ends -->
+        <br />
+        <br />
+        <!-- facebook auth start -->
+        <div class="fb-login-button" scope="public_profile,email" onlogin="checkLoginState();" data-width="100"
+            data-size="large" data-button-type="continue_with" data-layout="default" data-auto-logout-link="false"
+            data-use-continue-as="false"></div>
+        <br />
+        <br />
+        <button onclick="signOutFacebook();">Sign out: Facebook</button>
+        <!-- facebook auth ends -->
+        <br />
+        <br />
+        <!--twitter auth start-->
+        <div>
+            <picture onclick="onSignInTwitter()">
+                <img src="https://cdn.cms-twdigitalassets.com/content/dam/developer-twitter/auth-docs/sign-in-with-twitter-gray.png.twimg.1920.png"
+                    style="width: 158px" width="158px" height="28px"
+                    data-src="https://cdn.cms-twdigitalassets.com/content/dam/developer-twitter/auth-docs/sign-in-with-twitter-gray.png.twimg.1920.png"
+                    data-object-fit="cover" />
+            </picture>
+        </div>
+    </div>
+    <!--twitter auth end-->
+    </div>
+    <div id="status-google">
+    </div>
+    <div id="status-facebook">
+    </div>
+    <div id="status-twitter">
+    </div>
+
+</body>
+<script>
+    // google: auth start
+    function onSignInGoogle(googleUser) {
+        var profile = googleUser.getBasicProfile();
+        console.log('ID: ' + profile.getId());
+        console.log('Name: ' + profile.getName());
+        console.log('Image URL: ' + profile.getImageUrl());
+        console.log('Email: ' + profile.getEmail());
+        document.getElementById('status-google').innerHTML = 'Thanks for logging in, '
+            + profile.getName() + '!' + " Profile ID: " + profile.getId();
+    }
+    function signOutGoogle() {
+        var auth2 = gapi.auth2.getAuthInstance();
+        auth2.signOut().then(function () {
+            console.log('User signed out.');
+            document.getElementById('status-google').innerHTML = "Logged out"
+        });
+    }
+    //docs: https://developers.google.com/identity/sign-in/web/sign-in
+    // google: auth ends
+</script>
+<script>
+    //facebook: auth start
+    window.fbAsyncInit = function () {
+        FB.init({
+            appId: '696468478161371',
+            cookie: true,
+            xfbml: true,
+            version: 'v13.0'
+        });
+        FB.AppEvents.logPageView();
+    };
+
+    function statusChangeCallback(response) {
+        console.log(response);
+        if (response.status === 'connected') {
+            testAPI(response.authResponse.accessToken);
+        } else {
+            document.getElementById('status-facebook').innerHTML = 'Please log ' +
+                'into this webpage.';
+        }
+    }
+    function testAPI(accessToken) {
+        FB.api('/me', function (response) {
+            console.log('Successful login for: ' + response.name);
+            document.getElementById('status-facebook').innerHTML =
+                'Thanks for logging in, ' + response.name + '!' + " AccessToken: " + accessToken;
+        });
+    }
+    function checkLoginState() {
+        FB.getLoginStatus(function (response) {
+            statusChangeCallback(response);
+        });
+    }
+    function signOutFacebook() {
+        FB.logout(function (response) {
+            console.log("user is now logged out")
+            document.getElementById('status-facebook').innerHTML = "Logged out"
+        });
+    }
+    //docs: https://developers.facebook.com/docs/facebook-login/web
+    //facebook: auth ends
+</script>
+<script>
+    //twitter: auth start
+    //this auth is not working because I don't have twitter account
+    //CORS is comming because I did not specify the origin "https://oauths.netlify.app/" in twiiter developer oauth api origin
+    //But below process is correct. You can check by directly calling below link in chrome url.
+    //https://twitter.com/i/oauth2/authorize?response_type=code&client_id=M1M5R3BMVy13QmpScXkzTUt5OE46MTpjaQ&redirect_uri=https://www.example.com
+    function onSignInTwitter() {
+        const base_url = ' https://twitter.com/i/oauth2/authorize?';
+        const demo_client_id = 'M1M5R3BMVy13QmpScXkzTUt5OE46MTpjaQ';
+        const redirect_uri = "https://www.example.com"
+        const request_url = base_url + 'response_type=code&client_id=' + demo_client_id + '&redirect_uri=' + redirect_uri
+        fetch(request_url)
+            .then(response => response.json())
+            .then(data => {
+                console.log(data)
+                document.getElementById('status-twitter').innerHTML = data
+            });
+    }
+    //docs: https://developer.twitter.com/en/docs/authentication/guides/log-in-with-twitter
+    //twitter: auth end
+</script>
+
+</html>
